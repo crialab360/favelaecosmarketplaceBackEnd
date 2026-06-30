@@ -4,7 +4,7 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Banco de dados
+# Banco de dados (Ignora os arquivos .sqlite, mas mantém a pasta)
 database/*.sqlite
 database/*.sqlite-journal
 database/*.sqlite-wal
@@ -12,6 +12,7 @@ database/*.sqlite-shm
 *.db
 *.sqlite
 *.sqlite3
+!database/.gitkeep
 
 # Arquivos de ambiente (NUNCA enviar para o GitHub)
 .env
@@ -87,4 +88,3 @@ coverage/
 
 # Arquivos específicos do projeto
 database.sqlite
-.env.example (se não quiser enviar)

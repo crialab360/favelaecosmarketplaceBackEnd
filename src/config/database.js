@@ -2,12 +2,22 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const path = require('path');
 
+// Caminho ABSOLUTO para o banco de dados
 const dbPath = path.resolve(__dirname, '../../database/database.sqlite');
 
 let db;
 
 async function initializeDatabase() {
   try {
+    // Garantir que a pasta database existe
+    const fs = require('fs');
+    const dbDir = path.dirname(dbPath);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+      console.log('✅ Pasta database criada!');
+    }
+
+    // Abrir conexão com o banco
     db = await open({
       filename: dbPath,
       driver: sqlite3.Database
