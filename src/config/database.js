@@ -2,14 +2,12 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const path = require('path');
 
-// Caminho ABSOLUTO para o banco de dados
 const dbPath = path.resolve(__dirname, '../../database/database.sqlite');
 
 let db;
 
 async function initializeDatabase() {
   try {
-    // Garantir que a pasta database existe
     const fs = require('fs');
     const dbDir = path.dirname(dbPath);
     if (!fs.existsSync(dbDir)) {
@@ -17,7 +15,6 @@ async function initializeDatabase() {
       console.log('✅ Pasta database criada!');
     }
 
-    // Abrir conexão com o banco
     db = await open({
       filename: dbPath,
       driver: sqlite3.Database
@@ -34,6 +31,7 @@ async function initializeDatabase() {
 
 async function createTables() {
   try {
+    // Tabela de produtos
     await db.exec(`
       CREATE TABLE IF NOT EXISTS produtos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,14 +52,61 @@ async function createTables() {
 
     console.log('✅ Tabela "produtos" criada/verificada com sucesso!');
 
-    const count = await db.get('SELECT COUNT(*) as total FROM produtos');
+    // Tabela de categorias
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS categorias (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL UNIQUE,
+        icone TEXT,
+        descricao TEXT,
+        cor TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('✅ Tabela "categorias" criada/verificada com sucesso!');
+
+    // Inserir categorias padrão se a tabela estiver vazia
+    const count = await db.get('SELECT COUNT(*) as total FROM categorias');
     if (count.total === 0) {
+      await insertDefaultCategories();
+    }
+
+    // Inserir produtos de exemplo se a tabela estiver vazia
+    const countProdutos = await db.get('SELECT COUNT(*) as total FROM produtos');
+    if (countProdutos.total === 0) {
       await insertSampleData();
     }
 
   } catch (error) {
     console.error('❌ Erro ao criar tabelas:', error);
     throw error;
+  }
+}
+
+async function insertDefaultCategories() {
+  try {
+    const categories = [
+      { nome: 'Cama, Mesa & Banho', icone: '🛏️', descricao: 'Produtos para cama, mesa e banho', cor: '#4A90D9' },
+      { nome: 'Moda Feminina', icone: '👗', descricao: 'Vestidos, blusas, calças e acessórios femininos', cor: '#E91E63' },
+      { nome: 'Joias & Bijoux', icone: '💎', descricao: 'Joias finas e bijuterias', cor: '#FFD700' },
+      { nome: 'Alimentos', icone: '🍽️', descricao: 'Alimentos e bebidas', cor: '#4CAF50' },
+      { nome: 'Eletrônicos', icone: '📱', descricao: 'Celulares, computadores e acessórios', cor: '#2196F3' },
+      { nome: 'Beleza', icone: '💄', descricao: 'Cosméticos, perfumes e cuidados pessoais', cor: '#9C27B0' },
+      { nome: 'Chapéus & Bonés', icone: '🧢', descricao: 'Chapéus, bonés e acessórios para cabeça', cor: '#FF9800' }
+    ];
+
+    for (const cat of categories) {
+      await db.run(
+        `INSERT INTO categorias (nome, icone, descricao, cor) VALUES (?, ?, ?, ?)`,
+        [cat.nome, cat.icone, cat.descricao, cat.cor]
+      );
+    }
+
+    console.log('✅ Categorias padrão inseridas com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao inserir categorias padrão:', error);
   }
 }
 
